@@ -104,11 +104,14 @@ def order(request):
 
 def contact(request):
     if request.method == "POST":
-        contactname = request.POST.get('contactname','')
-        contactemail = request.POST.get('contactemail','')
-        contactnumber = request.POST.get('contactnumber','')
-        contactmsg = request.POST.get('contactmsg','')
+        contactname = request.POST.get('contactname', '')
+        contactemail = request.POST.get('contactemail', '')
+        contactnumber = request.POST.get('contactnumber', '')
+        contactmsg = request.POST.get('contactmsg', '')
 
-        contact = Contact(name = contactname, email = contactemail, phone_number = contactnumber,message = contactmsg)
+        contact = Contact(name=contactname, email=contactemail, phone_number=contactnumber, message=contactmsg)
         contact.save()
-    return render(request,'contact.html ')
+        messages.success(request, "Your message has been submitted successfully.")
+        return redirect('contact')
+
+    return render(request, 'contact.html')
