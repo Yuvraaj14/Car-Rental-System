@@ -1,47 +1,45 @@
 pipeline {
-    agent any 
-
-    environment {
-        // Set environment variables if needed, e.g., database credentials
-        DATABASE_URL = 'sqlite:///db.sqlite3'
-    }
+    agent any
 
     stages {
         stage('Checkout') {
             steps {
-                // Checkout the code from GitHub
-                checkout scm
+                git branch: 'main', url: 'https://github.com/Yuvraaj14/Car-Rental-System'
             }
         }
-        
-        stage('Build Docker Image') {
+
+        stage('Install Dependencies') {
             steps {
-                // Build the Docker image
                 script {
-                    def app = docker.build("truzzcarz:latest")
+                    // Use a shell command to install the dependencies
+                    sh 'pip install -r requirements.txt'
                 }
             }
         }
 
-        stage('Run Tests') {
+        stage('Run Migrations') {
             steps {
-                // Run tests inside the Docker container
                 script {
-                    docker.image("truzzcarz:latest").inside {
-                        sh 'python manage.py test'  // Replace with your actual test command
-                    }
+                    // Run database migrations
+                    sh 'python manage.py migrate'
                 }
             }
         }
 
-        stage('Deploy') {
+        stage('Collect Static') {
             steps {
-                // Deploy the application (adjust this step based on your deployment strategy)
                 script {
-                    // For example, push to a Docker registry
-                    docker.withRegistry('https://your-docker-registry-url', 'your-credentials-id') {
-                        docker.image("truzzcarz:latest").push()
-                    }
+                    // Collect static files
+                    sh 'python manage.py collectstatic --noinput'
+                }
+            }
+        }
+
+        stage('Start Django Server') {
+            steps {
+                script {
+                    // Start the Django server in the background
+                    sh 'nohup python manage.py runserver 0.0.0.0:8000 &'
                 }
             }
         }
@@ -49,18 +47,16 @@ pipeline {
 
     post {
         always {
-            // Clean up
+            // Clean workspace after the build
             cleanWs()
         }
-        
         success {
             // Notify success (you can add email notifications or other actions here)
-            echo 'Build and Deployment successful!'
+            echo 'Pipeline executed successfully!'
         }
-        
         failure {
             // Notify failure
-            echo 'Build or Deployment failed!'
+            echo 'Pipeline execution failed!'
         }
     }
 }
