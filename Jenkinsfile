@@ -36,13 +36,18 @@ pipeline {
         }
 
         stage('Start Django Server') {
-            steps {
-                script {
-                    // Start the Django server in the background
-                    sh 'nohup python manage.py runserver 0.0.0.0:8000 &'
-                }
-            }
+    steps {
+        script {
+            // Start the Django server in the background
+            sh 'python manage.py runserver 0.0.0.0:8000 &'
+            // Wait for a few seconds to allow the server to start
+            sleep 10
+            // Optional: Check if the server is running (e.g., using curl)
+            sh 'curl -f http://localhost:8000 || echo "Server is not running!"'
         }
+    }
+}
+
     }
 
     post {
