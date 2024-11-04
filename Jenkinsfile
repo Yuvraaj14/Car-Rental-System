@@ -4,7 +4,9 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/Yuvraaj14/Car-Rental-System'
+                script {
+                    git branch: 'main', url: 'https://github.com/Yuvraaj14/Car-Rental-System'
+                }
             }
         }
 
@@ -35,19 +37,31 @@ pipeline {
             }
         }
 
-        stage('Start Django Server') {
-    steps {
-        script {
-            // Start the Django server in the background
-            sh 'python manage.py runserver 0.0.0.0:8000 &'
-            // Wait for a few seconds to allow the server to start
-            sleep 10
-            // Optional: Check if the server is running (e.g., using curl)
-            sh 'curl -f http://localhost:8000 || echo "Server is not running!"'
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    // Build the Docker image
+                    sh 'docker build -t truzzcarz .'
+                }
+            }
         }
-    }
-}
 
+        stage('Run Docker Container') {
+            steps {
+                script {
+                    // Run the Docker container
+                    sh 'docker run -d -p 8000:8000 truzzcarz'
+                    // Wait for the server to start
+                    timeout(time: 30, unit: 'SECONDS') {
+                        waitUntil {
+                            script {
+                                return sh(script: 'curl -f http://localhost:8000', returnStatus: true) == 0
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     post {
